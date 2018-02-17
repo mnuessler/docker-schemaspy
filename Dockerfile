@@ -1,4 +1,4 @@
-FROM java:8
+FROM openjdk:8-jdk-slim
 
 MAINTAINER Matthias Nuessler <m.nuessler@web.de>
 
