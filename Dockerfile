@@ -1,16 +1,12 @@
-FROM openjdk:8-jdk-slim
+FROM openjdk:8-jdk-slim AS build
 
 MAINTAINER Matthias Nuessler <m.nuessler@web.de>
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y dist-upgrade && \
-    DEBIAN_FRONTEND=noninteractive apt-get -y --fix-missing install \
-        graphviz \
-        subversion \
+    DEBIAN_FRONTEND=noninteractive apt-get -y --fix-missing --no-install-recommends install \
         maven \
-        less \
-        libpostgresql-jdbc-java \
-        libmysql-java && \
+        subversion && \
     svn checkout -r 662 svn://svn.code.sf.net/p/schemaspy/code/trunk /usr/src/schemaspy && \
     perl -p -i -e 's/(driverPath=).*/\1\/usr\/share\/java\/mysql-connector-java\.jar/g' \
     /usr/src/schemaspy/src/main/resources/net/sourceforge/schemaspy/dbTypes/mysql.properties && \
@@ -22,7 +18,20 @@ RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y autoremove && \
     apt-get clean
 
+
+FROM openjdk:8-jre-slim
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get -y dist-upgrade && \
+    DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install \
+        graphviz \
+        less \
+        libhsqldb-java \
+        libmysql-java \
+        libpostgresql-jdbc-java
+
 COPY start.sh /
+COPY --from=build /opt/schemaspy/schemaspy.jar /opt/schemaspy/schemaspy.jar
 
 CMD ["--help"]
 ENTRYPOINT ["/start.sh"]
